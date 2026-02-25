@@ -1,7 +1,5 @@
 # 数据校验与漂移检测
 
-> 历史版本已合并：data-quality + schema-regression
-
 ## 目标
 
 保证输出数据的结构一致性、字段完整性、类型正确性，并及时发现 schema 漂移。

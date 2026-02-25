@@ -11,8 +11,6 @@
 > | 处理分页逻辑        | **五、分页处理**                    |
 > | 程序崩溃后恢复      | **五、分页处理 → 恢复脚本模板**     |
 
-> 历史版本已合并：response-handling + pagination-checkpoint + checkpoint
-
 ---
 
 ## 一、HTTP 状态码处理矩阵
