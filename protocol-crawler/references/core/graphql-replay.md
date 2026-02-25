@@ -2,8 +2,8 @@
 
 ## 说明
 
-GraphQL 是一种通用的 API 查询语言和运行时，并非 Instagram 专有。只有在抓包中出现
-`/graphql`、`operationName`、`doc_id/query_hash` 等特征时才需要使用本章；否则可跳过。
+GraphQL 是一种通用的 API 查询语言。只有在抓包中出现
+`/graphql`、`operationName`、`query_id`/`doc_id` 等特征时才需要使用本章；否则可跳过。
 
 ## 目标
 
@@ -11,22 +11,22 @@ GraphQL 是一种通用的 API 查询语言和运行时，并非 Instagram 专�
 
 ## GraphQL 常见形态
 
-1) **Persisted Query**
+1. **Persisted Query**
 
 - `POST /graphql` 或 `/api/graphql`
 - body 里不含 query 文本，依赖 `doc_id`/`query_hash`
 
-2) **Plain Query**
+2. **Plain Query**
 
 - body 包含 `query` 与 `variables`
 
 ## 必采字段
 
-- `doc_id` / `query_hash` / `operationName`
+- `operationName` / `query_id` / `doc_id`
 - `variables`（JSON）
-- `x-csrftoken` / `x-fb-lsd` / `authorization`
-- `x-ig-app-id`（若目标站点需要）
-- `fb_api_req_friendly_name`（便于定位）
+- `authorization` / `x-csrftoken` / 自定义 Auth 头
+- `x-api-key` / `x-app-id`（若目标站点需要）
+- 某些用于提示查询意图的明文字段（如 `operationName` 或类似的 friendly name）
 
 ## 复现要点
 
@@ -54,8 +54,8 @@ GraphQL 是一种通用的 API 查询语言和运行时，并非 Instagram 专�
 ## 复现模板示例（x-www-form-urlencoded）
 
 ```
-doc_id=123456
-fb_api_req_friendly_name=SomeQuery
+query_id=123456
+operationName=SomeQuery
 variables={"first":12,"after":"<cursor>","id":"<user_id>"}
 ```
 

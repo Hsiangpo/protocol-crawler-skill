@@ -29,7 +29,7 @@
   - 接口域名与路径（Host + Path）
   - 方法（GET/POST）
   - Content-Type（JSON / x-www-form-urlencoded / multipart）
-  - Headers（Authorization、X-CSRF、X-IG-App-ID、X-FB-LSD 等）
+  - Headers（Authorization、X-CSRF、X-API-Key、X-App-ID 等）
   - Cookies（哪些是必要的，是否与登录态绑定）
   - Initiator（触发来源：scroll/click/initial load）
   - Timing（是否存在排队/限流）
@@ -50,8 +50,8 @@
 - 重点提取：
   - `doc_id` / `query_hash` / `operationName`
   - `variables` JSON（注意 `after`/`first`/`count` 字段）
-  - 头部 `x-fb-lsd` / `x-csrftoken` / `x-ig-app-id`
-- 关注 `fb_api_req_friendly_name` 或类似字段用于定位 query。
+  - 头部 `authorization` / `x-csrftoken` / `x-api-key`
+- 关注 `operationName` 或类似字段用于快速定位 query。
 - 记录分页字段：`end_cursor`、`has_next_page`、`page_info`。
 - 详见：`graphql-replay.md`
 

@@ -138,7 +138,7 @@ description: End-to-end protocol crawler workflow. Trigger keywords (any languag
     └─ 需要yzm？
         │
         │  ⚠️ 默认策略：2cc/cs 过码 + nx 接口
-        │  （禁止训练模型/手动过，除非用户明确要求）
+        │  （禁止训练模型；分析阶段允许手动过一次以抓参数链路，见步骤 3）
         │
         ├─ cf/hyzm → cs 过码 + nx 接口
         └─ 其他yzm → 2cc 过码 + nx 接口
@@ -249,9 +249,9 @@ description: End-to-end protocol crawler workflow. Trigger keywords (any languag
 ### 5) 实现与验证
 
 - 按 PRD 实现协议pc（请求构建、qm/鉴权、分页、重试、限速、日志、失败兜底）
-- **TLS zw 必须配置**：使用 `curl_cffi` 模拟真实浏览器 TLS zw，禁止裸用 `requests`（详见 `references/humanization/network-layer.md`）
+- **TLS zw 必须配置**：使用 `curl_cffi` 模拟真实浏览器 TLS zw，禁止裸用 `requests`（**实现前必须先阅读** `references/humanization/network-layer.md`）
 - **限速必须遵守保守节奏**：每请求 2-5s + 随机抖动、每 10-20 页长休息、切换zh时 20-120s 休息（详见 `references/core/error-checkpoint.md` 限速策略）
-- **nx 文档强制**：每完成一个加密参数 nx，必须在 `js/docs/{param}.md` 创建对应文档（模板见 `references/core/engineering-standards.md`）
+- **nx 文档强制**：每完成一个加密参数 nx，必须在 `js/docs/{param}.md` 创建对应文档（模板见 `templates/nx-param-doc.md`）
 - **输出数据校验**：运行时抽样检查字段完整性和类型一致性，检测 Schema 漂移（详见 `references/core/data-validation.md`）
 - **2cc/cs 对接规范**：需要过码时，必须先用 Firecrawl MCP 调研 2cc/cs 的**官方 API 文档**，基于实际能力择一对接（不是两个都写）
 - 完善必要的测试/验证脚本与使用文档
@@ -313,13 +313,13 @@ description: End-to-end protocol crawler workflow. Trigger keywords (any languag
 
 | 文件路径                                                 | 内容摘要                                                            | 何时查阅                        |
 | -------------------------------------------------------- | ------------------------------------------------------------------- | ------------------------------- |
-| `core/devtools-mcp.md`                                   | DevTools 抓包的完整操作清单、GraphQL 特殊处理、fk信号识别、采样策略 | 步骤 2 需要深入分析时           |
+| `core/devtools-mcp.md`                                   | DevTools 抓包的完整操作清单、GraphQL 特殊处理、fk信号识别、采样策略 | 步骤 3 站点探索与接口分析时     |
 | `core/request-replay.md`                                 | 请求模板标准化、动态/静态字段拆分、qm复现步骤、常见坑               | 构建请求模板时                  |
 | `core/error-checkpoint.md`                               | HTTP 错误码处理策略、异常重试矩阵、断点续跑机制、限流退避算法       | 处理请求失败/429/403/断点续跑时 |
 | `core/graphql-replay.md`                                 | GraphQL 请求提取要点（doc_id/variables/分页字段）、batch 拆分       | 目标站点使用 GraphQL 时         |
 | `core/data-validation.md`                                | 数据校验规则、去重策略、字段完整性检查                              | 验证采集数据质量时              |
 | `core/engineering-standards.md`                          | 完整项目目录结构规范、编码规范、测试规范、debug/output 目录规范     | 初始化项目结构 / CI 门禁检查时  |
-| `core/prd-alignment.md`                                  | PRD 对齐锁机制、交互式需求收集流程                                  | 步骤 1 PRD 对齐时               |
+| `core/prd-alignment.md`                                  | PRD 对齐锁机制（格式、脚本用法、失效条件）                          | 步骤 1 PRD 对齐时               |
 | `yzm/captcha-solutions.md`                               | 各类yzm的过码方案选择（2cc/cs）、对接接口模板                       | 遇到yzm需要过码时               |
 | `humanization/_index.md`                                 | 拟人化策略总览与文件导航                                            | 需要fk对抗时先看这个            |
 | `humanization/network-layer.md`                          | **TLS zw（JA3/JA4）+ curl_cffi 配置、HTTP/2 头部顺序、Cookie zw**   | **所有 pc 项目必读**            |

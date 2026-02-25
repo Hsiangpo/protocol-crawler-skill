@@ -39,11 +39,11 @@ pagination:
 
 ## 动态字段分类
 
-| 类别       | 示例                                          | 来源          |
-| ---------- | --------------------------------------------- | ------------- |
-| **会话级** | sessionid, csrftoken, x-fb-lsd, authorization | Cookie/Header |
-| **请求级** | timestamp, nonce, qm                          | JS计算        |
-| **分页级** | cursor, page, offset                          | 响应提取      |
+| 类别       | 示例                                | 来源          |
+| ---------- | ----------------------------------- | ------------- |
+| **会话级** | sessionid, csrftoken, authorization | Cookie/Header |
+| **请求级** | timestamp, nonce, qm                | JS计算        |
+| **分页级** | cursor, page, offset                | 响应提取      |
 
 ## 复现清单
 
@@ -64,7 +64,7 @@ pagination:
 ## 鉴权复现清单
 
 - **Cookie 依赖**：确认是否必须带 `sessionid/csrftoken`
-- **Header 依赖**：记录 `Authorization`、`X-CSRF-Token`、`X-IG-App-ID` 等
+- **Header 依赖**：记录 `Authorization`、`X-CSRF-Token`、`X-API-Key` 等
 - **Origin/Referer**：部分站点强校验来源，需对齐页面来源
 - **qm算法**：明确输入字段顺序、拼接方式、Hash/加密算法、盐值来源
 
