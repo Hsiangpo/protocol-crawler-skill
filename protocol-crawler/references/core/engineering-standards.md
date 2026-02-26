@@ -60,7 +60,7 @@ project/
 │   ├── test_checkpoint.py         # 断点续跑测试
 │   └── {feature}-test-cases.md    # 测试用例文档（test-cases skill 格式）
 │
-├── debug/                         # 调试目录（git 忽略）
+├── debug/                         # 调试目录（git 忽略）— 人工排查用
 │   └── {timestamp}/               # 按时间戳分目录
 │       ├── logs/                  # 调试日志
 │       │   └── {timestamp}.log
@@ -70,6 +70,11 @@ project/
 │       │   └── response_001.json
 │       └── notes.md               # 调试笔记
 │
+├── tmp/                           # 运行时临时缓存（git 忽略）— 程序自动产生
+│   ├── responses/                 # 自动保存的异常响应（空数据/蜜罐检测）
+│   ├── screenshots/               # DevTools 自动截图
+│   └── analysis/                  # 分析中间产物
+│
 ├── output/                        # 输出目录
 │   ├── progress.json              # 断点进度文件
 │   ├── data.jsonl                 # 输出数据（JSONL 格式）
@@ -77,6 +82,8 @@ project/
 │       ├── data.jsonl
 │       └── summary.json           # 运行摘要
 │
+├── .env                           # 凭据文件（git 忽略）
+├── .env.example                   # 凭据模板（提交到 git）
 ├── .gitignore                     # Git 忽略规则
 ├── requirements.txt               # Python 依赖
 ├── pyproject.toml                 # 项目配置（可选）
@@ -90,7 +97,8 @@ project/
 | `src/`    | 主程序源码  | 每文件 ≤1000 行，每函数 ≤200 行                     |
 | `js/`     | nx 相关文件 | 分析放 `analysis/`，复刻放 `dist/`，测试放 `tests/` |
 | `tests/`  | 系统测试    | 遵循 test-cases skill 规范                          |
-| `debug/`  | 调试文件    | 按时间戳分目录，添加到 `.gitignore`                 |
+| `debug/`  | 调试文件    | 人工排查用，按时间戳分目录，添加到 `.gitignore`     |
+| `tmp/`    | 运行时缓存  | 程序自动产生（异常响应/截图），添加到 `.gitignore`  |
 | `output/` | 输出数据    | 断点进度、JSONL 数据、运行摘要                      |
 | `docs/`   | 项目文档    | PRD、TECH、INTERFACE、update                        |
 
@@ -137,20 +145,8 @@ tests/
 | 用例覆盖 | 包含正常用例和异常用例     |
 | 断言验证 | 使用 assert 语句验证结果   |
 
-### 测试用例文档
-
-遵循 `test-cases` skill 规范（`C:\Users\Administrator\.codex\skills\test-cases`）：
-
-```markdown
-# Test Cases: [功能名称]
-
-## TC-F-001: [测试标题]
-
-- **Priority**: High/Medium/Low
-- **Preconditions**: [前置条件]
-- **Test Steps**: [测试步骤]
-- **Expected Results**: [预期结果]
-```
+> **若已安装 Superpowers**：编码遵循 `test-driven-development` skill 的 RED-GREEN-REFACTOR 流程。
+> **若未安装**：按上述基本规则编写测试即可。
 
 ---
 
