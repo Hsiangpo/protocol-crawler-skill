@@ -1,0 +1,9 @@
+.env
+.env.*
+!.env.example
+.env_checked
+.env_checked*
+__pycache__/
+*.pyc
+tmp/
+debug/
