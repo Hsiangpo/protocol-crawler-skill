@@ -96,6 +96,8 @@ class PCClient:
 
 import json
 import logging
+import random
+import time
 from pathlib import Path
 from typing import Optional
 
@@ -147,7 +149,6 @@ class Crawler:
 
                 # 每 10 页长休息
                 if page % 10 == 0:
-                    import random, time
                     rest = random.uniform(10, 30)
                     logger.info(f"每 10 页长休息 {rest:.1f}s")
                     time.sleep(rest)
@@ -300,6 +301,18 @@ if __name__ == "__main__":
 ```jsonl
 {"id": "12345", "title": "示例标题", "content": "正文内容...", "created_at": "2026-01-01T00:00:00Z"}
 {"id": "12346", "title": "另一条数据", "content": "更多内容...", "created_at": "2026-01-02T00:00:00Z"}
+```
+
+### 5. 最小可运行自检（examples/smoke_test.py）
+
+```bash
+python examples/smoke_test.py
+```
+
+预期输出：
+
+```text
+SMOKE PASS: 写入 4 条数据，分页与重试逻辑验证通过
 ```
 
 ## 交付物检查清单

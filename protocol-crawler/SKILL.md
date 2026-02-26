@@ -6,19 +6,19 @@ description: "Use when building protocol-layer crawlers, scraping data via HTTP 
 
 # ⚠️ 关键指令：术语标准 ⚠️
 
-**强制执行**：
+**执行原则**：
 
-- 与用户对话、编写文档、代码注释、**甚至内部思考时**，**必须且只能使用下表中的缩写**。
-- **绝对禁止**：以任何形式使用全称或非缩写变体（即使作为举例也不行）。
-- **假定用户完全理解这些术语。**
+- 对外输出（用户对话、交付文档、代码注释）**优先使用下表缩写**。
+- 首次出现术语时可写为“全称（缩写）”，后续优先缩写，避免歧义。
+- 内部分析不强制缩写；但最终对外输出需保持术语一致。
 
 ### 💡 上下文压缩规则
 
 **当上下文被压缩/摘要时，必须：**
 
-1. 继续只使用缩写（禁止展开全称）
+1. 压缩内容优先缩写，必要时保留首次“全称（缩写）”
 2. 在压缩的上下文中包含此行：`[TERMINOLOGY: See protocol-crawler skill terminology table]`
-3. 压缩过程中不得丢失缩写映射表
+3. 压缩过程中不得丢失缩写映射关系
 
 | TERM（含义）        | 规则        |
 | :------------------ | :---------- |
@@ -250,7 +250,7 @@ pc 过程中遇到异常状态时（403/429/cf 挑战/数据为空/响应异常�
 
 **⚠️ 开始公告（强制）**：激活本 skill 开始 pc 工作时，Agent 必须向用户说：
 
-> "我正在使用 **protocol-crawler** skill 来执行这个任务。接下来我会按照 6 步流程进行：PRD 对齐 → 技术方案对齐 → 站点探索 → 难度汇报 → 实现与验证 → CI 门禁。"
+> "我正在使用 **protocol-crawler** skill 来执行这个任务。接下来我会按照 7 步流程进行：PRD 对齐 → 技术方案对齐 → 站点探索 → 难度汇报 → 实现与验证 → CI 门禁 → 最终清理与交付。"
 
 ## 🌳 决策树与难度判断
 
@@ -291,10 +291,18 @@ pc 过程中遇到异常状态时（403/429/cf 挑战/数据为空/响应异常�
 
 1. **运行锁验证脚本**：
 
-   > ⚠️ **路径提示**：为避免路径占位符或猜测绝对路径导致执行失败，此步骤必须使用下述 Python 单行命令，它会自动展开正确的绝对路径：
+   > ⚠️ **路径提示**：使用下面可直接复制的命令，不使用嵌套 `os.system`。
+
+   **PowerShell：**
+
+   ```powershell
+   python "$HOME/.codex/skills/protocol-crawler/scripts/alignment_lock.py" verify --target prd
+   ```
+
+   **bash：**
 
    ```bash
-   python -c "import os; os.system(f'python {os.path.expanduser(\"~/.codex/skills/protocol-crawler/scripts/alignment_lock.py\")} verify --target prd')"
+   python "$HOME/.codex/skills/protocol-crawler/scripts/alignment_lock.py" verify --target prd
    ```
 
    - ✅ 输出"对齐锁有效" → 跳过对齐，直接进入步骤 2
@@ -309,10 +317,32 @@ pc 过程中遇到异常状态时（403/429/cf 挑战/数据为空/响应异常�
      - 登录态/yzm/fk 的已知情况
 
 3. **对齐完成后，必须写入对齐锁**：
+
+   **PowerShell：**
+
+   ```powershell
+   python "$HOME/.codex/skills/protocol-crawler/scripts/alignment_lock.py" set --target prd --scope "对齐范围" --create
+   ```
+
+   **bash：**
+
    ```bash
-   python -c "import os; os.system(f'python {os.path.expanduser(\"~/.codex/skills/protocol-crawler/scripts/alignment_lock.py\")} set --target prd --scope \"对齐范围\" --create')"
+   python "$HOME/.codex/skills/protocol-crawler/scripts/alignment_lock.py" set --target prd --scope "对齐范围" --create
    ```
    > 不写锁 = 下次会话会重新对齐需求，浪费时间。
+
+**实测通过输出（2026-02-26）**
+
+- PowerShell（Windows）：
+  ```text
+  ✅ 已写入对齐锁: C:\Users\Administrator\AppData\Local\Temp\pc-skill-command-smoke-...\docs\PRD.md
+  ✅ C:\Users\Administrator\AppData\Local\Temp\pc-skill-command-smoke-...\docs\PRD.md: 对齐锁有效
+  ```
+- bash（WSL）：
+  ```text
+  ✅ 已写入对齐锁: /tmp/pc-skill-command-smoke-bash/docs/PRD.md
+  ✅ /tmp/pc-skill-command-smoke-bash/docs/PRD.md: 对齐锁有效
+  ```
 
 ### 2) ⛔ 技术方案对齐（强制 — 必须通过才能开始技术分析）
 
@@ -416,47 +446,16 @@ import requests  # 禁止
 
 > 详细原理见 `references/humanization/network-layer.md`
 
-**Session 管理（强制 — 禁止裸请求）：**
+**网络层与反检测最小清单（强制）**：
 
-- ✅ **必须全程使用同一个 `session` 对象**，让 Cookie jar 自动管理
-- ❌ **禁止每次请求创建新的 session/client**（Cookie/zw 丢失 → 触发fk）
-- 登录态 Cookie（如 `sessionid`、`csrftoken`）和fk追踪 Cookie（如 `_ga`、`cf_bm`）必须在 session 中持续携带
-- 如果爬取中间 Cookie 突然被清空或变化，**立即停止**排查原因
+- 全程复用同一个 `session`，禁止每次请求新建 client。
+- `impersonate` 与 `User-Agent` 必须同版本，禁止跨浏览器伪装混搭。
+- `Referer` / `Origin` 链路必须与 DevTools 抓包一致。
+- 限速和退避采用保守策略（请求间隔、长休息、429 退避）。
+- 使用 dl 时先做存活校验，并实现失败切换和失败统计淘汰。
+- 遇到疑似蜜罐数据时保存原始响应到 `tmp/responses/` 并暂停汇报。
 
-**UA 与 TLS zw 一致性（强制）：**
-
-- `impersonate` 参数与 `User-Agent` 头必须匹配同一浏览器版本
-- ❌ 禁止 `impersonate="chrome110"` 却发 `User-Agent: Mozilla/5.0 ... Firefox/120`
-- ❌ 禁止不设 `impersonate` 但手动拼 Chrome UA（TLS zw 不匹配）
-
-**Referer 链真实性：**
-
-- 首次请求的 `Referer` 应为搜索引擎或站点首页（不留空）
-- 后续导航请求的 `Referer` 应为上一个页面的 URL
-- API 请求的 `Referer` 和 `Origin` 应与 DevTools 抓包结果一致
-
-**限速（强制 — 保守节奏）：**
-
-| 场景          | 建议间隔    | 代码                               |
-| ------------- | ----------- | ---------------------------------- |
-| 每请求间隔    | 2-5s + 抖动 | `time.sleep(random.uniform(2, 5))` |
-| 每 N 页长休息 | 10-60s      | 每 10-20 页休息一次                |
-| zh 之间休息   | 20-120s     | 切换 zh 时                         |
-
-> 详细退避策略见 `references/core/error-checkpoint.md`
-
-**dl 管理（使用 dl 时强制）：**
-
-- 使用前**必须验证 dl 存活性**（发测试请求确认 IP 已变化）
-- 实现 dl 故障转移：单个 dl 连续失败 3 次 → 自动切换到下一个
-- 记录每个 dl 的成功/失败次数，淘汰高失败率 dl
-- 禁止裸 IP（不经 dl）和 dl IP 混用（zw不一致 → 触发fk）
-
-**蜜罐数据检测：**
-
-- 爬到的数据如果**内容高度重复**、**字段值异常规整**、或**与页面展示不一致**，可能是蜜罐数据
-- 冒烟测试时**必须对比** DevTools 中看到的真实页面数据与程序爬取的数据，确保一致
-- 如果返回了 200 但数据看起来像是假的（如所有价格都是 0、所有名字都相同），保存到 `tmp/responses/` 并报告用户
+> 详细规则统一查阅：`references/humanization/network-layer.md` + `references/core/error-checkpoint.md`。
 
 **其他实现要求：**
 
@@ -544,20 +543,48 @@ import requests  # 禁止
 
 **执行方式**：实现完成后运行 CI 门禁脚本，自动检查第 1-3、6-9 项，第 4-5 项需人工确认：
 
-> ⚠️ **路径提示**：为保证跨平台执行成功，**必须**使用以下命令自动组合绝对路径测试（请勿手动替换占位符）：
+> ⚠️ **路径提示**：使用下面可直接复制的命令，不使用嵌套 `os.system`。
 
-```bash
-python -c "import os; os.system(f'python {os.path.expanduser(\"~/.codex/skills/protocol-crawler/scripts/ci_gate.py\")} {os.getcwd()}')"
+**PowerShell：**
+
+```powershell
+python "$HOME/.codex/skills/protocol-crawler/scripts/ci_gate.py" "$PWD"
 ```
 
-脚本返回 0 = 全部通过，返回 1 = 存在不通过项。交付时向用户报告检查结果。
+**bash：**
+
+```bash
+python "$HOME/.codex/skills/protocol-crawler/scripts/ci_gate.py" "$(pwd)"
+```
+
+**需要把 1/6 扩展到全部文本文件时：**
+
+```powershell
+python "$HOME/.codex/skills/protocol-crawler/scripts/ci_gate.py" "$PWD" --all-text-files
+```
+
+```bash
+python "$HOME/.codex/skills/protocol-crawler/scripts/ci_gate.py" "$(pwd)" --all-text-files
+```
+
+脚本返回 0 = 全部通过，返回 1 = 存在不通过项。默认检查代码文件；加 `--all-text-files` 后扩展为全部文本文件。交付时向用户报告检查结果。
+
+**实测通过输出（2026-02-26）**
+
+```text
+📌 检查范围：代码文件（默认）
+✅ 自动检查项全部通过
+
+📌 检查范围：全部文本文件
+✅ 自动检查项全部通过
+```
 
 ### 7) 最终清理与交付（收尾机制）
 
 门禁通过并完成开发后，Agent 必须执行最后一步清洁工作：
 
 1. **扫描统计**：分别扫描项目下的 `tmp/` 和 `debug/` 目录，统计文件数量和预估体积。
-2. **主动清理与存档**：向用户汇报：_"代码已验证通过。目前 `tmp/` 和 `debug/` 积累了大量残留请求日志。是否需要我用脚本将 `debug/` 有价值日志打包为 ZIP 存档，并清理临时目录以保持整洁？"_
+2. **主动清理与存档**：向用户汇报：_"代码已验证通过。当前 `tmp/` 与 `debug/` 存在残留请求日志。建议执行：`debug/` 有价值日志打包 ZIP 存档 + 清理临时目录。请用户确认是否执行。"_
 3. **跨平台兼容删除**：若用户同意，**严禁使用 `rm -rf`**，必须使用 Python 命令（如 `shutil.rmtree`，并可选组合 `shutil.make_archive`）执行清理，确保 Windows/Mac/Linux 均不报错。
 
 ---
@@ -604,3 +631,4 @@ python -c "import os; os.system(f'python {os.path.expanduser(\"~/.codex/skills/p
 | 文件路径             | 用途                                                         |
 | -------------------- | ------------------------------------------------------------ |
 | `examples/README.md` | 完整 pc 项目骨架（目录结构 + 关键代码片段 + 交付物检查清单） |
+| `examples/smoke_test.py` | 最小可运行自检脚本（验证分页、429 重试、输出与断点） |

@@ -118,8 +118,11 @@ google-chrome --remote-debugging-port=9222
   5) 实现与验证             编码 + 冒烟测试
      │                     必须自己跑通！
      ▼
-  6) CI 门禁检查            9 项强制检查，涵盖收尾
-     │                     全通过 → 交付
+  6) CI 门禁检查            9 项强制检查
+     │                     全通过 → 进入收尾
+     ▼
+  7) 最终清理与交付         统计 + 归档 + 清理临时目录
+     │                     完成收尾 → 交付
      ▼
   ✅ 交付
 ```
@@ -156,7 +159,11 @@ protocol-crawler/
 │
 ├── scripts/                          # 🔧 辅助脚本
 │   ├── alignment_lock.py             #   对齐锁管理
-│   └── ci_gate.py                    #   CI 门禁自动检查与跨平台辅助
+│   └── ci_gate.py                    #   CI 门禁自动检查（支持 --all-text-files）
+│
+├── examples/                         # 🧪 端到端参考与最小自检
+│   ├── README.md                     #   参考实现与交付检查清单
+│   └── smoke_test.py                 #   最小可运行自检脚本
 │
 └── templates/                        # 📝 文档模板
     └── nx-param-doc.md               #   逆向参数文档模板

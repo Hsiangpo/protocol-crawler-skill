@@ -19,6 +19,17 @@ MAX_FILE_LINES = 1000
 MAX_FUNC_LINES = 200
 BANNED_SUFFIXES = ["_v2", "_v3", "_v4", "_v5", "_new", "_old", "_bak", "_backup", "_copy"]
 CODE_EXTENSIONS = {".py", ".js", ".ts", ".jsx", ".tsx", ".java", ".go", ".rs"}
+TEXT_LIKE_EXTENSIONS = {
+    ".md", ".txt", ".rst", ".json", ".jsonl", ".yaml", ".yml",
+    ".toml", ".ini", ".cfg", ".conf", ".env", ".csv", ".tsv",
+    ".xml", ".html", ".css", ".sql", ".sh", ".bat", ".ps1"
+}
+BINARY_EXTENSIONS = {
+    ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp", ".ico", ".svg",
+    ".pdf", ".doc", ".docx", ".ppt", ".pptx", ".xls", ".xlsx",
+    ".zip", ".rar", ".7z", ".gz", ".tar", ".exe", ".dll", ".so",
+    ".dylib", ".class", ".jar", ".pyc", ".pyd", ".bin"
+}
 IGNORE_DIRS = {
     "__pycache__", "node_modules", ".git", ".venv", "venv",
     "env", ".env", "dist", "build", ".next", ".cache",
@@ -239,8 +250,38 @@ def check_directory_structure(project_root: Path) -> List[str]:
     return errors
 
 
-def scan_project(project_root: Path) -> Tuple[int, int, int]:
-    """扫描项目，返回 (总文件数, 通过数, 失败数)"""
+def is_likely_text_file(filepath: Path) -> bool:
+    """判断文件是否可能是文本文件。"""
+    suffix = filepath.suffix.lower()
+    if suffix in BINARY_EXTENSIONS:
+        return False
+
+    # 对常见文本后缀快速放行，减少二进制探测开销
+    if suffix in CODE_EXTENSIONS or suffix in TEXT_LIKE_EXTENSIONS:
+        return True
+
+    # 无后缀或未知后缀：按内容做轻量探测
+    try:
+        with open(filepath, "rb") as f:
+            chunk = f.read(4096)
+    except OSError:
+        return False
+
+    if b"\x00" in chunk:
+        return False
+    return True
+
+
+def should_check_file(filepath: Path, all_text_files: bool) -> bool:
+    """判断当前文件是否应纳入检查范围。"""
+    suffix = filepath.suffix.lower()
+    if all_text_files:
+        return is_likely_text_file(filepath)
+    return suffix in CODE_EXTENSIONS
+
+
+def scan_project(project_root: Path, all_text_files: bool = False) -> Tuple[int, int, int, List[str]]:
+    """扫描项目，返回 (总文件数, 通过数, 失败数, 项目级错误列表)。"""
     total_files = 0
     pass_count = 0
     fail_count = 0
@@ -278,7 +319,7 @@ def scan_project(project_root: Path) -> Tuple[int, int, int]:
         for filename in files:
             filepath = Path(root) / filename
 
-            if filepath.suffix not in CODE_EXTENSIONS:
+            if not should_check_file(filepath, all_text_files):
                 continue
 
             total_files += 1
@@ -286,9 +327,10 @@ def scan_project(project_root: Path) -> Tuple[int, int, int]:
 
             file_errors = []
             file_errors.extend(check_file_lines(filepath))
-            file_errors.extend(check_function_lines(filepath))
             file_errors.extend(check_filename(filepath))
             file_errors.extend(check_encoding(filepath))
+            if filepath.suffix.lower() == ".py":
+                file_errors.extend(check_function_lines(filepath))
 
             if file_errors:
                 fail_count += 1
@@ -329,6 +371,9 @@ def main():
   8. .env 凭据管理（有 .env.example）
   9. 根目录无临时文件
   10. 目录结构基本规范
+
+默认仅检查代码文件（.py/.js/.ts/...）。
+可加 --all-text-files 扩展到全部文本文件（.md/.json/.yaml/.toml/...）。
         """
     )
     parser.add_argument(
@@ -341,6 +386,11 @@ def main():
         action="store_true",
         help="显示所有文件的检查结果（包括通过的）"
     )
+    parser.add_argument(
+        "--all-text-files",
+        action="store_true",
+        help="检查全部文本文件（默认仅检查代码文件）"
+    )
 
     args = parser.parse_args()
     project_root = Path(args.project_dir).resolve()
@@ -351,8 +401,11 @@ def main():
 
     print(f"🔍 CI 门禁检查：{project_root}")
     print("=" * 60)
+    print(f"📌 检查范围：{'全部文本文件' if args.all_text_files else '代码文件（默认）'}")
 
-    total_files, pass_count, fail_count, project_errors = scan_project(project_root)
+    total_files, pass_count, fail_count, project_errors = scan_project(
+        project_root, all_text_files=args.all_text_files
+    )
 
     # 项目级错误
     if project_errors:
