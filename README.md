@@ -54,7 +54,7 @@
 - **🔬 DevTools MCP 深度集成** — 通过 Chrome DevTools 实时抓包分析
 - **🧪 冒烟测试强制** — 代码写完必须自己跑通，爬到真实数据
 - **📑 逆向文档强制** — 每个加密参数必须生成对应文档
-- **✅ CI 门禁检查** — 8 项交付前强制检查
+- **✅ CI 门禁检查** — 9 项交付前跨平台强制检查及清理收尾机制
 
 ---
 
@@ -118,7 +118,7 @@ google-chrome --remote-debugging-port=9222
   5) 实现与验证             编码 + 冒烟测试
      │                     必须自己跑通！
      ▼
-  6) CI 门禁检查            8 项强制检查
+  6) CI 门禁检查            9 项强制检查，涵盖收尾
      │                     全通过 → 交付
      ▼
   ✅ 交付
@@ -155,7 +155,8 @@ protocol-crawler/
 │       └── captcha-solutions.md      #   过码方案（2cc/cs）
 │
 ├── scripts/                          # 🔧 辅助脚本
-│   └── alignment_lock.py             #   对齐锁管理
+│   ├── alignment_lock.py             #   对齐锁管理
+│   └── ci_gate.py                    #   CI 门禁自动检查与跨平台辅助
 │
 └── templates/                        # 📝 文档模板
     └── nx-param-doc.md               #   逆向参数文档模板
